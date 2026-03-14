@@ -6,26 +6,13 @@ import java.util.Scanner;
 
 public class ArchivoBMP {
 
-	public static int solicitarInfo(Scanner scn, String mensaje) {
-		int color = -1;
-		while (color < 0 || color > 255) {
-			System.out.print(mensaje);
-			if (scn.hasNextInt())
-				color = scn.nextInt();
-			else
-				System.out.println("Error: Dato no válido.");
-			scn.nextLine();
-		}
-		return color;
-	}
-
 	public static void main(String[] args) {
 
 		Scanner scn = new Scanner(System.in);
 
 		String nombreImagen = "";
 		int tamanioImagen = -1, tamanioFigura = -1, rojoImagen, verdeImagen, azulImagen, rojoFigura, verdeFigura,
-				azulFigura, limiteInferior, limiteSuperior, tamanioCirculo;
+				azulFigura, limiteInferior, limiteSuperior, tamanioCirculo = -1;
 		boolean esPar = false, dibujarCirculo;
 
 		System.out.print("¿Qué nombre quieres darle a la imagen?: ");
@@ -67,6 +54,27 @@ public class ArchivoBMP {
 		limiteInferior = (tamanioImagen - tamanioFigura) / 2;
 		limiteSuperior = limiteInferior + tamanioFigura - 1;
 
+		String respuesta;
+		do {
+			System.out.println("¿Quieres dibujar un círculo? (S/N): ");
+			respuesta = scn.next();
+			dibujarCirculo = respuesta.equalsIgnoreCase("S") ? true : false;
+
+			if (dibujarCirculo) {
+				while (tamanioCirculo >= tamanioFigura || tamanioCirculo < 2 || esPar != (tamanioCirculo % 2 == 0)) {
+					System.out.println("¿Que tamaño de circulo? (Número inferior a la figura): ");
+					if (scn.hasNextInt())
+						tamanioCirculo = scn.nextInt();
+					else
+						System.out.println("Error: Dato no válido.");
+
+					if (tamanioCirculo >= tamanioFigura)
+						System.out.println("El tamaño debe ser inferior al de la figura.");
+					scn.nextLine();
+				}
+			}
+		} while (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N"));
+
 		File imagen = new File(nombreImagen + ".bmp");
 		RandomAccessFile rafImagen = null;
 
@@ -79,6 +87,17 @@ public class ArchivoBMP {
 
 			for (int i = 0; i < tamanioImagen; i++) {
 				for (int j = 0; j < tamanioImagen; j++) {
+					double punto = 0;
+					if (dibujarCirculo) {
+						punto = (i - tamanioImagen / 2) * (i - tamanioImagen / 2)
+								+ (j - tamanioImagen / 2) * (j - tamanioImagen / 2);
+						if (punto <= (tamanioCirculo / 2) * (tamanioCirculo / 2)) {
+							rafImagen.write(azulFigura);
+							rafImagen.write(verdeFigura);
+							rafImagen.write(rojoFigura);
+							continue;
+						}
+					}
 
 					if ((i == limiteInferior || i == limiteSuperior) && j >= limiteInferior && j <= limiteSuperior) {
 						rafImagen.write(azulFigura);
@@ -111,6 +130,19 @@ public class ArchivoBMP {
 		// TODO POSIBLES MEJORAS: Dibujar un círculo (0,50). Dibujar cuadrado sobre bmp
 		// (0,50)
 
+	}
+
+	public static int solicitarInfo(Scanner scn, String mensaje) {
+		int color = -1;
+		while (color < 0 || color > 255) {
+			System.out.print(mensaje);
+			if (scn.hasNextInt())
+				color = scn.nextInt();
+			else
+				System.out.println("Error: Dato no válido.");
+			scn.nextLine();
+		}
+		return color;
 	}
 
 	private static void añadirCabecera(RandomAccessFile rafImagen, String nombreArchivo, int tamanioImagen,

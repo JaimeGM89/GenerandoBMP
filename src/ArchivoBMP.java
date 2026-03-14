@@ -24,7 +24,6 @@ public class ArchivoBMP {
 		boolean esPar = false, dibujarCirculo;
 
 		// Preguntamos al usuario por el nombre del archivo.
-
 		System.out.print("¿Qué nombre quieres darle a la imagen? (Sin extensión): ");
 		nombreImagen = scn.nextLine().trim();
 

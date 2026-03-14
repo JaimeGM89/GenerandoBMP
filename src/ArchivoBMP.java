@@ -4,20 +4,34 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Scanner;
 
+/*
+ * En este ejercicio solicitamos al usuario el tamaño de una imagen y de un
+ * cuadrado interior. Le pedimos el color de ambos y posteriormente si quiere
+ * crear un circulo. En caso afirmativo le preguntamos por el tamaño del circulo
+ * (este debe ser menor que el de la figura) y lo dibujamos sobre un archivo en
+ * formato .bmp
+ */
+
 public class ArchivoBMP {
 
 	public static void main(String[] args) {
 
+		// Declaración de variables y escaner.
 		Scanner scn = new Scanner(System.in);
-
 		String nombreImagen = "";
-		int tamanioImagen = -1, tamanioFigura = -1, rojoImagen, verdeImagen, azulImagen, rojoFigura, verdeFigura,
-				azulFigura, limiteInferior, limiteSuperior, tamanioCirculo = -1;
+		int tamanioImagen = -1, tamanioFigura = -1, rojoImagen = -1, verdeImagen = -1, azulImagen = -1, rojoFigura = -1,
+				verdeFigura = -1, azulFigura = -1, limiteInferior, limiteSuperior, tamanioCirculo = -1;
 		boolean esPar = false, dibujarCirculo;
 
-		System.out.print("¿Qué nombre quieres darle a la imagen?: ");
+		// Preguntamos al usuario por el nombre del archivo.
+
+		System.out.print("¿Qué nombre quieres darle a la imagen? (Sin extensión): ");
 		nombreImagen = scn.nextLine().trim();
 
+		/*
+		 * Preguntamos al usuario por el tamaño de la imagen y si introduce un valor
+		 * incorrecto se le vuelve a solicitar.
+		 */
 		while (tamanioImagen < 2) {
 			System.out.print("¿Qué tamaño quieres darle a la imagen?: ");
 			if (scn.hasNextInt())
@@ -27,8 +41,17 @@ public class ArchivoBMP {
 			scn.nextLine();
 		}
 
+		/*
+		 * Validamos si el número es par o impar para que el cuadrado interior tenga que
+		 * ser igual.
+		 */
 		esPar = tamanioImagen % 2 == 0;
 
+		/*
+		 * Solicitamos al usuario un tamaño para el cuadrado. Debe ser menor que el de
+		 * la imagen, no menor a dos y que sea par o impar como la imagen. Si no es
+		 * válido el valor, se le vuelve a solicitar.
+		 */
 		while (tamanioFigura > tamanioImagen || tamanioFigura < 2 || esPar != (tamanioFigura % 2 == 0)) {
 			System.out.print("¿Qué tamaño quieres darle al cuadrado?: ");
 			if (scn.hasNextInt())
@@ -41,24 +64,50 @@ public class ArchivoBMP {
 			scn.nextLine();
 		}
 
+		/*
+		 * Solicitamos colores de la imagen y del recuadro y si no es valido el valor,
+		 * se vuelve a pedir.
+		 */
 		System.out.println("\nCOLORES DE LA IMAGEN");
 		rojoImagen = solicitarInfo(scn, "Rojo (valor 0-255): ");
 		verdeImagen = solicitarInfo(scn, "Verde (valor 0-255): ");
 		azulImagen = solicitarInfo(scn, "Azul (valor 0-255): ");
 
-		System.out.println("\nCOLORES DE LA FIGURA");
-		rojoFigura = solicitarInfo(scn, "Rojo (valor 0-255): ");
-		verdeFigura = solicitarInfo(scn, "Verde (valor 0-255): ");
-		azulFigura = solicitarInfo(scn, "Azul (valor 0-255): ");
+		String colorImagen = "" + rojoImagen + verdeImagen + azulImagen;
+		String colorFigura = "";
 
+		/*
+		 * Al pedir el color de la figura, se compara para que no sea igual al de la
+		 * imagen.
+		 */
+		do {
+			System.out.println("\nCOLORES DE LA FIGURA");
+			rojoFigura = solicitarInfo(scn, "Rojo (valor 0-255): ");
+			verdeFigura = solicitarInfo(scn, "Verde (valor 0-255): ");
+			azulFigura = solicitarInfo(scn, "Azul (valor 0-255): ");
+
+			colorFigura = "" + rojoFigura + verdeFigura + azulFigura;
+			if (colorImagen.equals(colorFigura)) {
+				System.out.println("Elige un color distinto al de la imagen.");
+			}
+		} while (colorImagen.equals(colorFigura));
+
+		/*
+		 * Establecemos el limite superior e inferior para la escritura del cuadrado
+		 * dentro de la imagen.
+		 */
 		limiteInferior = (tamanioImagen - tamanioFigura) / 2;
 		limiteSuperior = limiteInferior + tamanioFigura - 1;
 
+		/*
+		 * Preguntamos si se quiere dibujar un circulo y el tamaño en caso afirmativo
+		 * (el tamaño debe ser inferior al del cuadrado).
+		 */
 		String respuesta;
 		do {
 			System.out.println("¿Quieres dibujar un círculo? (S/N): ");
 			respuesta = scn.next();
-			dibujarCirculo = respuesta.equalsIgnoreCase("S") ? true : false;
+			dibujarCirculo = respuesta.equalsIgnoreCase("S");
 
 			if (dibujarCirculo) {
 				while (tamanioCirculo >= tamanioFigura || tamanioCirculo < 2 || esPar != (tamanioCirculo % 2 == 0)) {
@@ -75,22 +124,39 @@ public class ArchivoBMP {
 			}
 		} while (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N"));
 
+		/* Generamos la referencia del archivo */
 		File imagen = new File(nombreImagen + ".bmp");
 		RandomAccessFile rafImagen = null;
 
+		// Multiplicamos los pixeles por el número de bytes (porque es BGR y no BGRA)
 		int bytesPorFila = tamanioImagen * 3;
+		/*
+		 * Hacemos que la imagen sea multiplo de cuatro, para rellenar con los ceros
+		 * necesarios para que el formato sea correcto
+		 */
 		int padding = (4 - (bytesPorFila % 4)) % 4;
 
+		/*
+		 * Creamos la conexión con el archivo y le damos permisos de escritura y lectura
+		 */
 		try {
 			rafImagen = new RandomAccessFile(imagen, "rw");
-			añadirCabecera(rafImagen, nombreImagen, tamanioImagen, bytesPorFila, padding);
+			// Inicializamos la cabecera con la información proporcionada por el usuario.
+			aniadirCabecera(rafImagen, tamanioImagen, bytesPorFila, padding);
 
+			/*
+			 * Si dibujarCirculo indica que hay que hacerlo, pintamos en el pixel que
+			 * corresponde y con continue nos saltamos el resto de iteración en ese pixel
+			 * para que no lo sobreescriba la imagen o el cuadrado.
+			 */
 			for (int i = 0; i < tamanioImagen; i++) {
 				for (int j = 0; j < tamanioImagen; j++) {
-					double punto = 0;
+					double punto;
 					if (dibujarCirculo) {
+						// Calculamos el radio al cuadrado.
 						punto = (i - tamanioImagen / 2) * (i - tamanioImagen / 2)
 								+ (j - tamanioImagen / 2) * (j - tamanioImagen / 2);
+						// Si el punto se encuentra dentro del radio al cuadrado, lo pintamos.
 						if (punto <= (tamanioCirculo / 2) * (tamanioCirculo / 2)) {
 							rafImagen.write(azulFigura);
 							rafImagen.write(verdeFigura);
@@ -99,6 +165,11 @@ public class ArchivoBMP {
 						}
 					}
 
+					/*
+					 * Comprobamos los limites calculados previamente del cuadrado, en el primer if
+					 * pintariamos los lados, en el segundo la parte superior e inferior y con else
+					 * el resto de la imagen.
+					 */
 					if ((i == limiteInferior || i == limiteSuperior) && j >= limiteInferior && j <= limiteSuperior) {
 						rafImagen.write(azulFigura);
 						rafImagen.write(verdeFigura);
@@ -114,24 +185,36 @@ public class ArchivoBMP {
 						rafImagen.write(rojoImagen);
 					}
 				}
+
+				// Rellenamos con ceros el resto de la imagen para que cumpla el formato.
 				for (int p = 0; p < padding; p++) {
 					rafImagen.write(0);
 				}
 			}
 
 			System.out.println("La imagen ha sido creada.");
+			/*
+			 * Cerramos la conexión con el archivo para que no genere problemas y la
+			 * información se escriba correctamente.
+			 */
 			rafImagen.close();
 
+			/*
+			 * Con los dos catch, capturaremos posibles errores para que no crashee (aunque
+			 * el archivo no se cerrará correctamente).
+			 */
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// TODO POSIBLES MEJORAS: Dibujar un círculo (0,50). Dibujar cuadrado sobre bmp
-		// (0,50)
-
 	}
 
+	/*
+	 * Mostramos un mensaje recibido como parámetro y validamos que la información
+	 * del color es correcta. Si no lo es, se le vuelve a solicitar y devuelve el
+	 * valor como un entero.
+	 */
 	public static int solicitarInfo(Scanner scn, String mensaje) {
 		int color = -1;
 		while (color < 0 || color > 255) {
@@ -145,33 +228,50 @@ public class ArchivoBMP {
 		return color;
 	}
 
-	private static void añadirCabecera(RandomAccessFile rafImagen, String nombreArchivo, int tamanioImagen,
-			int bytesPorFila, int padding) throws FileNotFoundException, IOException {
+	/*
+	 * A partir de los parámetros recibidos creamos la cabecera del archivo .bmp
+	 * introduciendo sus datos en un array con un tamaño previamente definido.
+	 */
+	private static void aniadirCabecera(RandomAccessFile rafImagen, int tamanioImagen, int bytesPorFila, int padding)
+			throws FileNotFoundException, IOException {
 
 		int tamanioArchivo;
-		byte cabecera[];
+		/*
+		 * Declaramos e inicializamos el array. Al no asignar valor, se rellena con
+		 * ceros para posteriormente modificar unicamente los que necesitamos.
+		 */
+		byte cabecera[] = new byte[54];
 
-		cabecera = new byte[54];
-
-		// 3. Bytes totales de una fila
+		// Calculamos el tamaño del archivo a partir del tamaño de cada fila.
 		int filaTotal = bytesPorFila + padding;
+		// Calculamos el tamaño total del archivo.
 		tamanioArchivo = (14 + 40 + filaTotal * tamanioImagen);
 
-		cabecera[0] = 66;// Letra B
-		cabecera[1] = 77;// Letra M
-		tamanio(cabecera, tamanioArchivo, 2);
-		cabecera[10] = 54;
+		// Rellenamos con los valores necesarios, algunos de ellos son predefinidos y
+		// otros deben de ser calculados.
+		cabecera[0] = 66; // Letra B en formato decimal
+		cabecera[1] = 77;// Letra M en formato decimal.
+		tamanio(cabecera, tamanioArchivo, 2); // Asignamos el valor del tamaño final del archivo a los bytes
+												// comprendidos entre el 2 y el 5 (incluidos).
+		cabecera[10] = 54; // Se indica el desfase hasta los datos.
 		cabecera[14] = 40; // Tamaño del header inferior (fijo en este caso)
-		tamanio(cabecera, tamanioImagen, 18);
-		tamanio(cabecera, tamanioImagen, 22);
+		tamanio(cabecera, tamanioImagen, 18); // Asignamos el tamaño de la base dando valor a los bytes comprendidos
+												// entre el 18 y 21 (incluidos).
+		tamanio(cabecera, tamanioImagen, 22); // Asignamos el tamaño de la altura dando valor a los bytes comprendidos
+												// entre el 22 y 25 (incluidos).
 		cabecera[26] = 1;
-		cabecera[28] = 24;
-		cabecera[46] = 2; // Numero de colores en la paleta
-		cabecera[50] = 2; // Numero de colores usados
+		cabecera[28] = 24; // Bits por pixel, al ser tres canales por 8 bits, es igual a 24.
 
+		// Escribimos la cabecera sobre el archivo con el que habíamos creado la
+		// conexión en el main.
 		rafImagen.write(cabecera);
 	}
 
+	/*
+	 * Recibe un array de bytes, un entero y una posición. Descompone el entero en 4
+	 * bytes usando deplazamiento de bits y 0xFF para extraer solo los 8 bits de
+	 * cada byte.
+	 */
 	public static void tamanio(byte[] array, int tamanio, int posicion) {
 		array[posicion] = (byte) (tamanio & 0xFF);
 		array[posicion + 1] = (byte) ((tamanio >> 8) & 0xFF);
